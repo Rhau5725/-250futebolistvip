@@ -14,6 +14,44 @@ const agilityPlans = [
   { name: "Portas Relâmpago", time: "10 min", material: "10 cones e bolas", sequence: "Comando de cor → aceleração → passe pela porta → mudança de direção", rounds: "4 séries de 50 s, com 25 s de pausa" },
 ];
 
+const vipObjectives = ["Técnica", "Decisão", "Finalização", "Criatividade", "Equipe", "Coordenação"];
+const vipSessionNames = ["Academia do Primeiro Toque", "Laboratório de Espaços", "Clube dos Finalizadores", "Oficina do Improviso", "Esquadrão Conectado", "Movimento de Craque", "Domínio Sob Pressão", "Jogo das Decisões", "Ataque em Ondas", "Fábrica de Soluções"];
+const vipSessions = vipObjectives.flatMap((objective, oi) => vipSessionNames.map((name, i) => ({
+  id: oi * 10 + i + 1,
+  title: `${name} ${i + 1}`,
+  objective,
+  age: ["5–7", "7–9", "9–11", "11–13"][(i + oi) % 4],
+  duration: [45, 50, 60, 70][(i + oi) % 4],
+  players: ["6–10", "8–12", "10–14"][(i + oi) % 3],
+  mission: ["controlar e jogar antes da pressão", "enxergar duas opções antes de receber", "criar vantagem sem ficar parado", "resolver o lance usando os dois pés"][(i + oi) % 4],
+  blocks: [
+    `Ativação VIP: circuito curto com bola, estímulo visual e mudança de direção (${8 + i % 3} min).`,
+    `Fundamento guiado: duplas cumprem metas progressivas de ${objective.toLowerCase()}, sem filas (${12 + i % 4} min).`,
+    `Jogo condicionado: ponto extra ao conseguir ${["apoio rápido", "troca de corredor", "finalização consciente", "participação de todos"][i % 4]} (${18 + i % 5} min).`,
+    `Desafio final: equipe precisa completar a missão “${["3 decisões corretas seguidas", "gol com dois pés", "recuperar em 5 segundos", "todos participam da jogada"][i % 4]}”.`
+  ]
+})));
+
+const magicChallengeNames = ["Embaixadinha Alternada", "Sola Relâmpago", "Parede Precisa", "Giro do Mágico", "Túnel de Cones", "Alvo Secreto", "Pé Fraco Valente", "Domínio Silencioso"];
+const magicChallenges = Array.from({ length: 56 }, (_, i) => ({
+  id: i + 1,
+  title: `${magicChallengeNames[i % magicChallengeNames.length]} • Nível ${Math.floor(i / 8) + 1}`,
+  duration: [5, 6, 7, 8][i % 4],
+  equipment: ["1 bola", "1 bola e uma parede", "1 bola e 4 cones", "1 bola e 2 alvos"][i % 4],
+  task: [
+    `Faça ${10 + i} contatos alternando os pés sem deixar a bola escapar do seu espaço.`,
+    `Conduza em oito por ${20 + i} segundos e pare a bola exatamente na marca ao sinal.`,
+    `Complete ${8 + (i % 12)} passes no alvo; a bola deve voltar dominada em até dois toques.`,
+    `Crie três movimentos diferentes, dê um nome para cada um e execute a sequência sem repetir.`,
+    `Passe por quatro portas em ordem diferente, usando uma mudança de direção em cada porta.`,
+    `Acerte o alvo ${5 + (i % 8)} vezes alternando finalização colocada e rasteira.`,
+    `Use somente o pé não dominante por ${30 + i} segundos e conclua com um passe preciso.`,
+    `Receba cinco bolas de direções diferentes e deixe cada uma pronta para a próxima ação.`
+  ][i % 8],
+  level: ["Iniciante", "Explorador", "Craque", "Lenda"][(Math.floor(i / 14)) % 4],
+  win: ["Complete sem perder o controle.", "Supere sua primeira marca mantendo a técnica.", "Faça duas rodadas perfeitas seguidas.", "Ensine o desafio a um colega após concluir."][i % 4]
+}));
+
 type Drill = {
   id: number;
   title: string;
@@ -158,6 +196,31 @@ function BonusTool({ tool, onClose }: { tool: number; onClose: () => void }) {
   </div>;
 }
 
+function VipTool({ tool, onClose }: { tool: "library" | "challenges"; onClose: () => void }) {
+  const [objective, setObjective] = useState("Todos");
+  const [session, setSession] = useState(vipSessions[0]);
+  const [week, setWeek] = useState(0);
+  const [completed, setCompleted] = useState<number[]>([]);
+  const sessions = objective === "Todos" ? vipSessions : vipSessions.filter(s => s.objective === objective);
+  const weekly = magicChallenges.slice(week * 7, week * 7 + 7);
+  return <div className="overlay vip-tool-overlay" role="dialog" aria-modal="true" onClick={onClose}>
+    <article className="vip-tool" onClick={e => e.stopPropagation()}>
+      <button className="close" onClick={onClose} aria-label="Fechar">×</button>
+      <span className="tool-kicker">🔒 CONTEÚDO EXCLUSIVO VIP</span>
+      {tool === "library" ? <>
+        <h2>Biblioteca VIP</h2><p className="tool-lead">60 treinos completos e exclusivos. Cada plano já vem dividido em blocos para aplicar do início ao fim.</p>
+        <div className="vip-filter"><button className={objective === "Todos" ? "active" : ""} onClick={() => setObjective("Todos")}>Todos <small>60</small></button>{vipObjectives.map(o => <button key={o} className={objective === o ? "active" : ""} onClick={() => {setObjective(o); setSession(vipSessions.find(s => s.objective === o)!);}}>{o} <small>10</small></button>)}</div>
+        <div className="vip-library-layout"><div className="vip-session-list">{sessions.map(item => <button key={item.id} className={session.id === item.id ? "active" : ""} onClick={() => setSession(item)}><span>{String(item.id).padStart(2,"0")}</span><div><b>{item.title}</b><small>{item.objective} • {item.age} anos</small></div><i>→</i></button>)}</div><div className="vip-session-detail"><span className="session-badge">PLANO VIP {String(session.id).padStart(2,"0")}</span><h3>{session.title}</h3><div className="plan-summary"><span>⏱ {session.duration} min</span><span>👥 {session.players}</span><span>🎯 {session.objective}</span></div><p><b>MISSÃO:</b> {session.mission}</p><ol>{session.blocks.map((block, i) => <li key={block}><i>{i + 1}</i><span>{block}</span></li>)}</ol><div className="coach-call"><b>RESULTADO ESPERADO</b><span>Atletas ativos, decisões variadas e evolução observável ao final da sessão.</span></div></div></div>
+      </> : <>
+        <h2>7 Dias de Pé Mágico</h2><p className="tool-lead">56 desafios exclusivos organizados em 8 semanas. Nenhum deles faz parte das +250 dinâmicas básicas.</p>
+        <div className="week-picker">{Array.from({length:8},(_,i)=><button key={i} className={week === i ? "active" : ""} onClick={() => setWeek(i)}>Semana {i+1}</button>)}</div>
+        <div className="challenge-progress"><span style={{width:`${completed.length / 56 * 100}%`}}/><b>{completed.length}/56 concluídos</b></div>
+        <div className="challenge-list">{weekly.map((challenge, day) => <article key={challenge.id} className={completed.includes(challenge.id) ? "complete" : ""}><div className="challenge-day"><small>DIA</small><b>{day + 1}</b></div><div className="challenge-copy"><span>{challenge.level} • {challenge.duration} min</span><h3>{challenge.title}</h3><p>{challenge.task}</p><small><b>MATERIAL:</b> {challenge.equipment}</small><em>🏆 {challenge.win}</em></div><button onClick={() => setCompleted(c => c.includes(challenge.id) ? c.filter(id => id !== challenge.id) : [...c, challenge.id])}>{completed.includes(challenge.id) ? "✓ Feito" : "Marcar feito"}</button></article>)}</div>
+      </>}
+    </article>
+  </div>;
+}
+
 export default function Home() {
   const [category, setCategory] = useState("Todos");
   const [query, setQuery] = useState("");
@@ -166,6 +229,7 @@ export default function Home() {
   const [saved, setSaved] = useState<number[]>([]);
   const [visible, setVisible] = useState(12);
   const [bonusTool, setBonusTool] = useState<number | null>(null);
+  const [vipTool, setVipTool] = useState<"library" | "challenges" | null>(null);
   const filtered = useMemo(() => drills.filter(d => (category === "Todos" || d.category === category) && (`${d.title} ${d.goal}`).toLowerCase().includes(query.toLowerCase())), [category, query]);
   const chooseRandom = () => setSelected(filtered[Math.floor(Math.random() * filtered.length)] || drills[0]);
   return <main>
@@ -205,14 +269,14 @@ export default function Home() {
     <section className="vip-section" id="vip">
       <div className="vip-header"><span className="vip-lock">🔒</span><div><span className="eyebrow">ACESSO ESPECIAL DO TREINADOR</span><h2>Área VIP</h2><p>Planejamento contínuo para transformar atividades isoladas em uma temporada completa de evolução.</p></div><span className="vip-badge">MEMBRO VIP</span></div>
       <div className="vip-grid">
-        <article className="vip-library"><div className="vip-card-top"><span>📚</span><small>BIBLIOTECA INTELIGENTE</small></div><h3>Treinos por objetivo</h3><p>Monte treinos completos em poucos minutos escolhendo exatamente a habilidade que deseja desenvolver.</p><div className="objective-pills"><span>Passe</span><span>Finalização</span><span>Drible</span><span>Posse</span><span>Coordenação</span><span>1x1</span></div><a href="#biblioteca">Abrir biblioteca <b>→</b></a></article>
-        <article className="vip-challenge"><div className="vip-card-top"><span>🏆</span><small>DESAFIO DA SEMANA</small></div><h3>7 dias de pé mágico</h3><p>Desafios práticos para manter os atletas motivados, aumentar o engajamento e acompanhar a evolução técnica.</p><div className="week-row"><span className="done">S<br/><b>✓</b></span><span className="done">T<br/><b>✓</b></span><span className="today">Q<br/><b>3</b></span><span>Q<br/><b>4</b></span><span>S<br/><b>5</b></span><span>S<br/><b>6</b></span><span>D<br/><b>7</b></span></div><button onClick={() => setCategory("Domínio")}>Começar desafio <b>→</b></button></article>
+        <article className="vip-library"><div className="vip-card-top"><span>📚</span><small>BIBLIOTECA EXCLUSIVA</small></div><h3>60 treinos VIP</h3><p>Uma biblioteca própria com sessões completas que não aparecem no plano básico, organizadas por objetivo.</p><div className="objective-pills"><span>Técnica</span><span>Decisão</span><span>Finalização</span><span>Criatividade</span><span>Equipe</span><span>Coordenação</span></div><button onClick={() => setVipTool("library")}>Abrir biblioteca VIP <b>→</b></button></article>
+        <article className="vip-challenge"><div className="vip-card-top"><span>🏆</span><small>56 DESAFIOS INÉDITOS</small></div><h3>7 dias de pé mágico</h3><p>Oito semanas de desafios exclusivos, progressivos e separados das +250 dinâmicas da biblioteca básica.</p><div className="week-row"><span className="done">S<br/><b>✓</b></span><span className="done">T<br/><b>✓</b></span><span className="today">Q<br/><b>3</b></span><span>Q<br/><b>4</b></span><span>S<br/><b>5</b></span><span>S<br/><b>6</b></span><span>D<br/><b>7</b></span></div><button onClick={() => setVipTool("challenges")}>Ver os 56 desafios <b>→</b></button></article>
       </div>
       <div className="vip-note"><span>✦</span><p><b>NOVO CONTEÚDO TODA SEMANA</b> Use os desafios para criar constância e os filtros para adaptar cada sessão ao nível da turma.</p></div>
     </section>
 
     <section className="how" id="como-usar"><span className="eyebrow">DO CELULAR PARA O CAMPO</span><h2>Três toques. Treino pronto.</h2><div><article><i>01</i><span>◎</span><h3>Escolha o objetivo</h3><p>Filtre pelo fundamento do treino.</p></article><article><i>02</i><span>▤</span><h3>Veja a dinâmica</h3><p>Diagrama e regras em uma tela.</p></article><article><i>03</i><span>▶</span><h3>Leve para o campo</h3><p>Abra o modo Reel e grave.</p></article></div></section>
     <footer><div className="brand"><span>⚽</span><div>FUTEBOL<small>EM JOGO</small></div></div><p>Treinos que viram memória.</p><b>+250 dinâmicas • acesso imediato</b></footer>
-    {selected && <Detail drill={selected} onClose={() => setSelected(null)} />}{reel && <Detail drill={reel} reel onClose={() => setReel(null)} />}{bonusTool && <BonusTool tool={bonusTool} onClose={() => setBonusTool(null)} />}
+    {selected && <Detail drill={selected} onClose={() => setSelected(null)} />}{reel && <Detail drill={reel} reel onClose={() => setReel(null)} />}{bonusTool && <BonusTool tool={bonusTool} onClose={() => setBonusTool(null)} />}{vipTool && <VipTool tool={vipTool} onClose={() => setVipTool(null)} />}
   </main>;
 }

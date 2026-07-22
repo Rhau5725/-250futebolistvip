@@ -175,11 +175,8 @@ function Detail({ drill, onClose, reel = false }: { drill: Drill; onClose: () =>
 }
 
 function BonusTool({ tool, onClose }: { tool: number; onClose: () => void }) {
+  const athlete = ""; const award = "Evolução no treino"; const coachName = ""; const certificateDate = new Date().toISOString().slice(0, 10);
   const [choice, setChoice] = useState(0);
-  const [athlete, setAthlete] = useState("");
-  const [award, setAward] = useState("Evolução no treino");
-  const [coachName, setCoachName] = useState("");
-  const [certificateDate, setCertificateDate] = useState(new Date().toISOString().slice(0, 10));
   const [duration, setDuration] = useState(60);
   const [checked, setChecked] = useState<number[]>([]);
   const warmup = warmups[choice % warmups.length];
@@ -206,11 +203,7 @@ function BonusTool({ tool, onClose }: { tool: number; onClose: () => void }) {
     const imageBlob = await fetch("/certificado-craque-premium.png").then(r => r.blob());
     const imageData = await new Promise<string>(resolve => { const reader = new FileReader(); reader.onload = () => resolve(reader.result as string); reader.readAsDataURL(imageBlob); });
     doc.addImage(imageData, "PNG", 0, 0, 297, 210);
-    doc.setTextColor(5, 76, 48); doc.setFont("helvetica", "bold"); doc.setFontSize(23); doc.text((athlete || "NOME DO ATLETA").toUpperCase(), 148.5, 111, { align: "center" });
-    doc.setFontSize(10); doc.setTextColor(35, 35, 35); doc.text(award, 148.5, 121, { align: "center" });
-    doc.setFontSize(8); doc.text((coachName || "TREINADOR").toUpperCase(), 89, 179, { align: "center" });
-    doc.text(certificateDate.split("-").reverse().join("/"), 215, 179, { align: "center" });
-    doc.save(`certificado-${(athlete || "craque").toLowerCase().replace(/\s+/g, "-")}.pdf`);
+    doc.save("certificado-de-craque.pdf");
   };
   const titles = ["Aquecimentos Prontos", "Certificado de Craque", "Organização de Treino", "Agilidade e Velocidade"];
   return <div className="overlay bonus-overlay" role="dialog" aria-modal="true" aria-label={titles[tool - 1]} onClick={onClose}>
@@ -221,7 +214,7 @@ function BonusTool({ tool, onClose }: { tool: number; onClose: () => void }) {
         <div className="tool-tabs">{warmups.map((item, i) => <button key={item.name} className={choice === i ? "active" : ""} onClick={() => setChoice(i)}>{item.name}</button>)}</div>
         <div className="ready-plan"><div className="plan-summary"><span>⏱ {warmup.time}</span><span>👟 {warmup.age}</span><span>🎯 {warmup.focus}</span></div><h3>{warmup.name}</h3><p><b>MATERIAIS:</b> {warmup.material}</p><ol>{warmup.steps.map((step, i) => <li key={step}><i>{i + 1}</i><span>{step}</span></li>)}</ol><div className="coach-call"><b>COMANDO DO TREINADOR</b><span>“Cabeça erguida, bola perto do pé e acelera quando ouvir o sinal!”</span></div></div>
       </>}
-      {tool === 2 && <div className="certificate-maker"><div className="certificate-form"><label>Nome do atleta<input value={athlete} onChange={e => setAthlete(e.target.value)} placeholder="Digite o nome" /></label><label>Conquista<select value={award} onChange={e => setAward(e.target.value)}><option>Evolução no treino</option><option>Craque da equipe</option><option>Dedicação e esforço</option><option>Fair play</option></select></label><label>Nome do treinador<input value={coachName} onChange={e => setCoachName(e.target.value)} placeholder="Digite o nome" /></label><label>Data<input type="date" value={certificateDate} onChange={e => setCertificateDate(e.target.value)} /></label><div className="certificate-actions"><button onClick={downloadCertificate}>↓ Baixar em PDF</button><button className="print-button" onClick={() => window.print()}>▣ Imprimir</button></div></div><div className="certificate-image-preview"><img src="/certificado-craque-premium.png" alt="Certificado de Craque em verde e dourado"/><div className="cert-name">{athlete || "NOME DO ATLETA"}</div><div className="cert-award">{award}</div><div className="cert-coach">{coachName || "TREINADOR"}</div><div className="cert-date">{certificateDate.split("-").reverse().join("/")}</div></div></div>}
+      {tool === 2 && <div className="certificate-maker certificate-only"><div className="certificate-actions"><button onClick={downloadCertificate}>↓ Baixar em PDF</button><button className="print-button" onClick={() => window.print()}>▣ Imprimir</button></div><div className="certificate-image-preview"><img src="/certificado-craque-premium.png" alt="Certificado de Craque em verde e dourado"/></div></div>}
       {tool === 3 && <div className="planner"><label>Duração do treino: <b>{duration} minutos</b><input type="range" min="40" max="100" step="10" value={duration} onChange={e => setDuration(Number(e.target.value))} /></label><div className="timeline"><div style={{flex:1}}><b>1</b><span>Aquecimento<strong>{Math.round(duration * .15)} min</strong></span></div><div style={{flex:2}}><b>2</b><span>Técnica<strong>{Math.round(duration * .3)} min</strong></span></div><div style={{flex:2}}><b>3</b><span>Jogo aplicado<strong>{Math.round(duration * .35)} min</strong></span></div><div style={{flex:1}}><b>4</b><span>Desafio final<strong>{Math.round(duration * .15)} min</strong></span></div></div><h3>Checklist do treinador</h3>{["Separar bolas, cones e coletes", "Definir objetivo e regra principal", "Preparar duas variações", "Organizar água e área segura", "Fechar com feedback da turma"].map((item, i) => <button className={`check-row ${checked.includes(i) ? "done" : ""}`} key={item} onClick={() => setChecked(c => c.includes(i) ? c.filter(x => x !== i) : [...c, i])}><i>{checked.includes(i) ? "✓" : ""}</i>{item}</button>)}</div>}
       {tool === 4 && <><div className="tool-tabs">{agilityPlans.map((item, i) => <button key={item.name} className={choice === i ? "active" : ""} onClick={() => setChoice(i)}>{item.name}</button>)}</div><div className="agility-tool"><div className="agility-track"><span>1</span><i>↝</i><span>2</span><i>↝</i><span>3</span><i>↝</i><span>⚽</span></div><h3>{agility.name}</h3><div><small>DURAÇÃO</small><b>{agility.time}</b></div><div><small>MATERIAIS</small><b>{agility.material}</b></div><div><small>SEQUÊNCIA</small><b>{agility.sequence}</b></div><div><small>VOLUME</small><b>{agility.rounds}</b></div><p><strong>Progressão:</strong> cronometre cada rodada e desafie o atleta a repetir com técnica antes de tentar superar o tempo.</p></div></>}
     </article>

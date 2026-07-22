@@ -2,6 +2,18 @@
 
 import { useMemo, useState } from "react";
 
+const warmups = [
+  { name: "Semáforo com Bola", time: "8 min", age: "5–9 anos", material: "1 bola por atleta + 8 cones", steps: ["Monte um quadrado de 15 x 15 m e espalhe os jogadores com bola.", "Verde: condução rápida. Amarelo: domínio curto. Vermelho: pare a bola com a sola.", "A cada 45 segundos, troque o comando e peça uma mudança de direção.", "Finalize com 2 rodadas de 30 segundos usando apenas o pé não dominante."], focus: "Ativação, domínio e reação" },
+  { name: "Caça às Cores", time: "7 min", age: "7–11 anos", material: "12 cones de 4 cores + bolas", steps: ["Distribua quatro cores de cones em um espaço de 18 x 18 m.", "Todos conduzem a bola sem se encostar.", "Ao chamar uma cor, cada atleta acelera até um cone daquela cor e faz a volta por fora.", "Na última rodada, chame duas cores em sequência para estimular memória e reação."], focus: "Percepção, aceleração e coordenação" },
+  { name: "Passe e Desperta", time: "10 min", age: "9–13 anos", material: "6 cones + 1 bola por trio", steps: ["Forme triângulos de 7 m com três jogadores e uma bola.", "O atleta passa e corre até o cone livre, mantendo o triângulo em movimento.", "Após 2 minutos, limite a dois toques e peça comunicação antes do passe.", "Termine com disputa: primeiro trio a completar 20 passes limpos vence."], focus: "Passe, mobilidade e comunicação" },
+];
+
+const agilityPlans = [
+  { name: "Circuito Raio", time: "9 min", material: "6 cones e 1 bola", sequence: "Zigue-zague → aceleração de 5 m → domínio orientado → retorno leve", rounds: "3 séries de 45 s, com 30 s de pausa" },
+  { name: "Espelho Turbo", time: "8 min", material: "4 cones por dupla", sequence: "Um líder muda de direção; o parceiro copia sem cruzar os pés", rounds: "4 séries de 30 s; troque o líder a cada série" },
+  { name: "Portas Relâmpago", time: "10 min", material: "10 cones e bolas", sequence: "Comando de cor → aceleração → passe pela porta → mudança de direção", rounds: "4 séries de 50 s, com 25 s de pausa" },
+];
+
 type Drill = {
   id: number;
   title: string;
@@ -122,6 +134,30 @@ function Detail({ drill, onClose, reel = false }: { drill: Drill; onClose: () =>
   </div>;
 }
 
+function BonusTool({ tool, onClose }: { tool: number; onClose: () => void }) {
+  const [choice, setChoice] = useState(0);
+  const [athlete, setAthlete] = useState("");
+  const [award, setAward] = useState("Evolução no treino");
+  const [duration, setDuration] = useState(60);
+  const [checked, setChecked] = useState<number[]>([]);
+  const warmup = warmups[choice % warmups.length];
+  const agility = agilityPlans[choice % agilityPlans.length];
+  const titles = ["Aquecimentos Prontos", "Certificado de Craque", "Organização de Treino", "Agilidade e Velocidade"];
+  return <div className="overlay bonus-overlay" role="dialog" aria-modal="true" aria-label={titles[tool - 1]} onClick={onClose}>
+    <article className="bonus-tool" onClick={e => e.stopPropagation()}>
+      <button className="close" onClick={onClose} aria-label="Fechar">×</button>
+      <span className="tool-kicker">BÔNUS {tool} • FERRAMENTA PRÁTICA</span><h2>{titles[tool - 1]}</h2>
+      {tool === 1 && <>
+        <div className="tool-tabs">{warmups.map((item, i) => <button key={item.name} className={choice === i ? "active" : ""} onClick={() => setChoice(i)}>{item.name}</button>)}</div>
+        <div className="ready-plan"><div className="plan-summary"><span>⏱ {warmup.time}</span><span>👟 {warmup.age}</span><span>🎯 {warmup.focus}</span></div><h3>{warmup.name}</h3><p><b>MATERIAIS:</b> {warmup.material}</p><ol>{warmup.steps.map((step, i) => <li key={step}><i>{i + 1}</i><span>{step}</span></li>)}</ol><div className="coach-call"><b>COMANDO DO TREINADOR</b><span>“Cabeça erguida, bola perto do pé e acelera quando ouvir o sinal!”</span></div></div>
+      </>}
+      {tool === 2 && <div className="certificate-maker"><div className="certificate-form"><label>Nome do atleta<input value={athlete} onChange={e => setAthlete(e.target.value)} placeholder="Digite o nome" /></label><label>Conquista<select value={award} onChange={e => setAward(e.target.value)}><option>Evolução no treino</option><option>Craque da equipe</option><option>Dedicação e esforço</option><option>Fair play</option></select></label><button onClick={() => window.print()}>Imprimir certificado</button></div><div className="certificate"><small>CERTIFICADO DE CRAQUE</small><span>⚽</span><p>Este certificado reconhece</p><h3>{athlete || "NOME DO ATLETA"}</h3><p>por sua conquista em</p><b>{award}</b><footer>FUTEBOL EM JOGO • TREINADOR</footer></div></div>}
+      {tool === 3 && <div className="planner"><label>Duração do treino: <b>{duration} minutos</b><input type="range" min="40" max="100" step="10" value={duration} onChange={e => setDuration(Number(e.target.value))} /></label><div className="timeline"><div style={{flex:1}}><b>1</b><span>Aquecimento<strong>{Math.round(duration * .15)} min</strong></span></div><div style={{flex:2}}><b>2</b><span>Técnica<strong>{Math.round(duration * .3)} min</strong></span></div><div style={{flex:2}}><b>3</b><span>Jogo aplicado<strong>{Math.round(duration * .35)} min</strong></span></div><div style={{flex:1}}><b>4</b><span>Desafio final<strong>{Math.round(duration * .15)} min</strong></span></div></div><h3>Checklist do treinador</h3>{["Separar bolas, cones e coletes", "Definir objetivo e regra principal", "Preparar duas variações", "Organizar água e área segura", "Fechar com feedback da turma"].map((item, i) => <button className={`check-row ${checked.includes(i) ? "done" : ""}`} key={item} onClick={() => setChecked(c => c.includes(i) ? c.filter(x => x !== i) : [...c, i])}><i>{checked.includes(i) ? "✓" : ""}</i>{item}</button>)}</div>}
+      {tool === 4 && <><div className="tool-tabs">{agilityPlans.map((item, i) => <button key={item.name} className={choice === i ? "active" : ""} onClick={() => setChoice(i)}>{item.name}</button>)}</div><div className="agility-tool"><div className="agility-track"><span>1</span><i>↝</i><span>2</span><i>↝</i><span>3</span><i>↝</i><span>⚽</span></div><h3>{agility.name}</h3><div><small>DURAÇÃO</small><b>{agility.time}</b></div><div><small>MATERIAIS</small><b>{agility.material}</b></div><div><small>SEQUÊNCIA</small><b>{agility.sequence}</b></div><div><small>VOLUME</small><b>{agility.rounds}</b></div><p><strong>Progressão:</strong> cronometre cada rodada e desafie o atleta a repetir com técnica antes de tentar superar o tempo.</p></div></>}
+    </article>
+  </div>;
+}
+
 export default function Home() {
   const [category, setCategory] = useState("Todos");
   const [query, setQuery] = useState("");
@@ -129,6 +165,7 @@ export default function Home() {
   const [reel, setReel] = useState<Drill | null>(null);
   const [saved, setSaved] = useState<number[]>([]);
   const [visible, setVisible] = useState(12);
+  const [bonusTool, setBonusTool] = useState<number | null>(null);
   const filtered = useMemo(() => drills.filter(d => (category === "Todos" || d.category === category) && (`${d.title} ${d.goal}`).toLowerCase().includes(query.toLowerCase())), [category, query]);
   const chooseRandom = () => setSelected(filtered[Math.floor(Math.random() * filtered.length)] || drills[0]);
   return <main>
@@ -158,10 +195,10 @@ export default function Home() {
     <section className="bonus-section" id="bonus">
       <div className="bonus-heading"><div><span className="eyebrow dark">CONTEÚDO QUE ACELERA RESULTADOS</span><h2>🎁 Bônus exclusivos</h2></div><span className="bonus-seal">4 BÔNUS<br/><b>INCLUSOS</b></span></div>
       <div className="bonus-grid">
-        <article><i>01</i><div className="bonus-icon">⚡</div><small>BÔNUS 1</small><h3>Aquecimentos Prontos</h3><p>Exercícios rápidos para iniciar os treinos com mais organização, intensidade e preparação física.</p><ul><li>Ativação com bola</li><li>Rotinas de 5 a 10 minutos</li><li>Organização sem filas</li></ul></article>
-        <article><i>02</i><div className="bonus-icon">🏅</div><small>BÔNUS 2</small><h3>Certificados de Craque</h3><p>Modelos de certificados para reconhecer a dedicação, evolução e participação dos atletas.</p><ul><li>Modelos prontos para imprimir</li><li>Reconhecimento por conquista</li><li>Mais motivação para a turma</li></ul></article>
-        <article><i>03</i><div className="bonus-icon">▤</div><small>BÔNUS 3</small><h3>Organização de Treinos</h3><p>Aprenda a estruturar treinos mais eficientes, mantendo os atletas motivados do início ao fim.</p><ul><li>Roteiro completo de sessão</li><li>Divisão inteligente do tempo</li><li>Checklist do treinador</li></ul></article>
-        <article><i>04</i><div className="bonus-icon">🚀</div><small>BÔNUS 4</small><h3>Agilidade e Velocidade</h3><p>Exercícios para desenvolver explosão, velocidade, coordenação e mudança de direção.</p><ul><li>Progressões por idade</li><li>Circuitos com poucos materiais</li><li>Desafios de reação</li></ul></article>
+        <article><i>01</i><div className="bonus-icon">⚡</div><small>BÔNUS 1</small><h3>Aquecimentos Prontos</h3><p>Escolha uma rotina e leve o passo a passo direto para o campo.</p><ul><li>3 rotinas completas</li><li>Tempo, materiais e comandos</li><li>Aplicação sem filas</li></ul><button className="open-tool" onClick={() => setBonusTool(1)}>Abrir aquecimentos <b>→</b></button></article>
+        <article><i>02</i><div className="bonus-icon">🏅</div><small>BÔNUS 2</small><h3>Certificados de Craque</h3><p>Digite o nome, escolha a conquista e gere o certificado na hora.</p><ul><li>Personalização imediata</li><li>4 tipos de conquista</li><li>Pronto para imprimir</li></ul><button className="open-tool" onClick={() => setBonusTool(2)}>Criar certificado <b>→</b></button></article>
+        <article><i>03</i><div className="bonus-icon">▤</div><small>BÔNUS 3</small><h3>Organização de Treinos</h3><p>Defina a duração e receba uma sessão dividida automaticamente.</p><ul><li>Linha do tempo ajustável</li><li>Divisão inteligente</li><li>Checklist interativo</li></ul><button className="open-tool" onClick={() => setBonusTool(3)}>Montar meu treino <b>→</b></button></article>
+        <article><i>04</i><div className="bonus-icon">🚀</div><small>BÔNUS 4</small><h3>Agilidade e Velocidade</h3><p>Abra circuitos completos com sequência, volume e progressão.</p><ul><li>3 circuitos aplicáveis</li><li>Séries e pausas definidas</li><li>Progressão por desempenho</li></ul><button className="open-tool" onClick={() => setBonusTool(4)}>Abrir circuitos <b>→</b></button></article>
       </div>
     </section>
 
@@ -176,6 +213,6 @@ export default function Home() {
 
     <section className="how" id="como-usar"><span className="eyebrow">DO CELULAR PARA O CAMPO</span><h2>Três toques. Treino pronto.</h2><div><article><i>01</i><span>◎</span><h3>Escolha o objetivo</h3><p>Filtre pelo fundamento do treino.</p></article><article><i>02</i><span>▤</span><h3>Veja a dinâmica</h3><p>Diagrama e regras em uma tela.</p></article><article><i>03</i><span>▶</span><h3>Leve para o campo</h3><p>Abra o modo Reel e grave.</p></article></div></section>
     <footer><div className="brand"><span>⚽</span><div>FUTEBOL<small>EM JOGO</small></div></div><p>Treinos que viram memória.</p><b>+250 dinâmicas • acesso imediato</b></footer>
-    {selected && <Detail drill={selected} onClose={() => setSelected(null)} />}{reel && <Detail drill={reel} reel onClose={() => setReel(null)} />}
+    {selected && <Detail drill={selected} onClose={() => setSelected(null)} />}{reel && <Detail drill={reel} reel onClose={() => setReel(null)} />}{bonusTool && <BonusTool tool={bonusTool} onClose={() => setBonusTool(null)} />}
   </main>;
 }

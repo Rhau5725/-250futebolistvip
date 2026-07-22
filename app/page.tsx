@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { jsPDF } from "jspdf";
+import "./certificate.css";
 
 const warmups = [
   { name: "Semáforo com Bola", time: "8 min", age: "5–9 anos", material: "1 bola por atleta + 8 cones", steps: ["Monte um quadrado de 15 x 15 m e espalhe os jogadores com bola.", "Verde: condução rápida. Amarelo: domínio curto. Vermelho: pare a bola com a sola.", "A cada 45 segundos, troque o comando e peça uma mudança de direção.", "Finalize com 2 rodadas de 30 segundos usando apenas o pé não dominante."], focus: "Ativação, domínio e reação" },
@@ -176,10 +178,33 @@ function BonusTool({ tool, onClose }: { tool: number; onClose: () => void }) {
   const [choice, setChoice] = useState(0);
   const [athlete, setAthlete] = useState("");
   const [award, setAward] = useState("Evolução no treino");
+  const [coachName, setCoachName] = useState("");
+  const [certificateDate, setCertificateDate] = useState(new Date().toISOString().slice(0, 10));
   const [duration, setDuration] = useState(60);
   const [checked, setChecked] = useState<number[]>([]);
   const warmup = warmups[choice % warmups.length];
   const agility = agilityPlans[choice % agilityPlans.length];
+  const downloadCertificate = () => {
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const green = [5, 76, 48] as [number, number, number]; const gold = [213, 169, 63] as [number, number, number];
+    doc.setFillColor(250, 249, 245); doc.rect(0, 0, 297, 210, "F");
+    doc.setFillColor(...green); doc.triangle(0, 0, 86, 0, 0, 75, "F"); doc.triangle(297, 210, 211, 210, 297, 135, "F");
+    doc.setFillColor(...gold); doc.triangle(0, 13, 67, 0, 0, 58, "F"); doc.triangle(297, 197, 230, 210, 297, 152, "F");
+    doc.setDrawColor(...gold); doc.setLineWidth(1.4); doc.rect(12, 12, 273, 186); doc.setDrawColor(...green); doc.setLineWidth(.5); doc.rect(15, 15, 267, 180);
+    doc.setTextColor(...green); doc.setFont("helvetica", "bold"); doc.setFontSize(34); doc.text("CERTIFICADO", 148.5, 48, { align: "center" });
+    doc.setTextColor(20, 20, 20); doc.setFontSize(17); doc.text("DE CRAQUE", 148.5, 61, { align: "center" });
+    doc.setTextColor(...gold); doc.setFontSize(16); doc.text("★", 148.5, 75, { align: "center" });
+    doc.setTextColor(55, 55, 55); doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.text("Este certificado é concedido a", 148.5, 91, { align: "center" });
+    doc.setTextColor(...green); doc.setFont("helvetica", "bold"); doc.setFontSize(24); doc.text((athlete || "NOME DO ATLETA").toUpperCase(), 148.5, 110, { align: "center" });
+    doc.setDrawColor(...gold); doc.line(75, 115, 222, 115);
+    doc.setTextColor(45, 45, 45); doc.setFont("helvetica", "normal"); doc.setFontSize(11); doc.text(`por ${award.toLowerCase()}, dedicação, esforço e paixão pelo futebol.`, 148.5, 128, { align: "center" });
+    doc.text("Parabéns por superar desafios e ser um craque dentro e fora de campo!", 148.5, 137, { align: "center" });
+    doc.setDrawColor(...green); doc.line(55, 169, 112, 169); doc.line(185, 169, 242, 169);
+    doc.setFontSize(9); doc.setFont("helvetica", "bold"); doc.text((coachName || "TREINADOR").toUpperCase(), 83.5, 177, { align: "center" });
+    doc.text(certificateDate.split("-").reverse().join("/"), 213.5, 177, { align: "center" });
+    doc.setTextColor(...gold); doc.setFontSize(13); doc.text("FUTEBOL EM JOGO", 148.5, 188, { align: "center" });
+    doc.save(`certificado-${(athlete || "craque").toLowerCase().replace(/\s+/g, "-")}.pdf`);
+  };
   const titles = ["Aquecimentos Prontos", "Certificado de Craque", "Organização de Treino", "Agilidade e Velocidade"];
   return <div className="overlay bonus-overlay" role="dialog" aria-modal="true" aria-label={titles[tool - 1]} onClick={onClose}>
     <article className="bonus-tool" onClick={e => e.stopPropagation()}>
@@ -189,7 +214,7 @@ function BonusTool({ tool, onClose }: { tool: number; onClose: () => void }) {
         <div className="tool-tabs">{warmups.map((item, i) => <button key={item.name} className={choice === i ? "active" : ""} onClick={() => setChoice(i)}>{item.name}</button>)}</div>
         <div className="ready-plan"><div className="plan-summary"><span>⏱ {warmup.time}</span><span>👟 {warmup.age}</span><span>🎯 {warmup.focus}</span></div><h3>{warmup.name}</h3><p><b>MATERIAIS:</b> {warmup.material}</p><ol>{warmup.steps.map((step, i) => <li key={step}><i>{i + 1}</i><span>{step}</span></li>)}</ol><div className="coach-call"><b>COMANDO DO TREINADOR</b><span>“Cabeça erguida, bola perto do pé e acelera quando ouvir o sinal!”</span></div></div>
       </>}
-      {tool === 2 && <div className="certificate-maker"><div className="certificate-form"><label>Nome do atleta<input value={athlete} onChange={e => setAthlete(e.target.value)} placeholder="Digite o nome" /></label><label>Conquista<select value={award} onChange={e => setAward(e.target.value)}><option>Evolução no treino</option><option>Craque da equipe</option><option>Dedicação e esforço</option><option>Fair play</option></select></label><button onClick={() => window.print()}>Imprimir certificado</button></div><div className="certificate"><small>CERTIFICADO DE CRAQUE</small><span>⚽</span><p>Este certificado reconhece</p><h3>{athlete || "NOME DO ATLETA"}</h3><p>por sua conquista em</p><b>{award}</b><footer>FUTEBOL EM JOGO • TREINADOR</footer></div></div>}
+      {tool === 2 && <div className="certificate-maker"><div className="certificate-form"><label>Nome do atleta<input value={athlete} onChange={e => setAthlete(e.target.value)} placeholder="Digite o nome" /></label><label>Conquista<select value={award} onChange={e => setAward(e.target.value)}><option>Evolução no treino</option><option>Craque da equipe</option><option>Dedicação e esforço</option><option>Fair play</option></select></label><label>Nome do treinador<input value={coachName} onChange={e => setCoachName(e.target.value)} placeholder="Digite o nome" /></label><label>Data<input type="date" value={certificateDate} onChange={e => setCertificateDate(e.target.value)} /></label><div className="certificate-actions"><button onClick={downloadCertificate}>↓ Baixar em PDF</button><button className="print-button" onClick={() => window.print()}>▣ Imprimir</button></div></div><div className="certificate certificate-premium"><div className="cert-corner cert-left"/><div className="cert-corner cert-right"/><div className="cert-medal">★</div><header><strong>CERTIFICADO</strong><b>DE CRAQUE</b><span>— ★ —</span></header><p>Este certificado é concedido a</p><h3>{athlete || "NOME DO ATLETA"}</h3><p>por <b>{award.toLowerCase()}</b>, dedicação, esforço e paixão pelo futebol.<br/>Parabéns por ser um craque dentro e fora de campo!</p><div className="cert-signatures"><span><i>{coachName || "TREINADOR"}</i><b>TREINADOR</b></span><span><i>{certificateDate.split("-").reverse().join("/")}</i><b>DATA</b></span></div><footer>⚽ FUTEBOL EM JOGO</footer></div></div>}
       {tool === 3 && <div className="planner"><label>Duração do treino: <b>{duration} minutos</b><input type="range" min="40" max="100" step="10" value={duration} onChange={e => setDuration(Number(e.target.value))} /></label><div className="timeline"><div style={{flex:1}}><b>1</b><span>Aquecimento<strong>{Math.round(duration * .15)} min</strong></span></div><div style={{flex:2}}><b>2</b><span>Técnica<strong>{Math.round(duration * .3)} min</strong></span></div><div style={{flex:2}}><b>3</b><span>Jogo aplicado<strong>{Math.round(duration * .35)} min</strong></span></div><div style={{flex:1}}><b>4</b><span>Desafio final<strong>{Math.round(duration * .15)} min</strong></span></div></div><h3>Checklist do treinador</h3>{["Separar bolas, cones e coletes", "Definir objetivo e regra principal", "Preparar duas variações", "Organizar água e área segura", "Fechar com feedback da turma"].map((item, i) => <button className={`check-row ${checked.includes(i) ? "done" : ""}`} key={item} onClick={() => setChecked(c => c.includes(i) ? c.filter(x => x !== i) : [...c, i])}><i>{checked.includes(i) ? "✓" : ""}</i>{item}</button>)}</div>}
       {tool === 4 && <><div className="tool-tabs">{agilityPlans.map((item, i) => <button key={item.name} className={choice === i ? "active" : ""} onClick={() => setChoice(i)}>{item.name}</button>)}</div><div className="agility-tool"><div className="agility-track"><span>1</span><i>↝</i><span>2</span><i>↝</i><span>3</span><i>↝</i><span>⚽</span></div><h3>{agility.name}</h3><div><small>DURAÇÃO</small><b>{agility.time}</b></div><div><small>MATERIAIS</small><b>{agility.material}</b></div><div><small>SEQUÊNCIA</small><b>{agility.sequence}</b></div><div><small>VOLUME</small><b>{agility.rounds}</b></div><p><strong>Progressão:</strong> cronometre cada rodada e desafie o atleta a repetir com técnica antes de tentar superar o tempo.</p></div></>}
     </article>
